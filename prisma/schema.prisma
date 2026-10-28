@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+enum Role {
+  INSTITUTION_USER
+  SCRUTINY_OFFICER
+  COMPETENT_AUTHORITY
+  AUDITOR
+  ADMIN
+}
+
+enum InstrumentType {
+  FDR
+  SECURITY_DEPOSIT
+}
+
+enum CustodyStatus {
+  WITH_INSTITUTION
+  SUBMITTED_TO_OFFICE
+  IN_CUSTODY
+  RETURNED
+}
+
+enum AdminStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_SCRUTINY
+  DISCREPANCY_OPEN
+  VERIFIED
+  RENEWAL_PENDING
+  RENEWED_OR_REPLACED
+  RELEASE_REQUESTED
+  RELEASE_APPROVED
+  RELEASED
+  REJECTED
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum DiscrepancyStatus {
+  OPEN
+  RESPONDED
+  RESOLVED
+  WAIVED
+}
+
+enum ReleaseStage {
+  REQUESTED
+  SCRUTINY
+  RECOMMENDED
+  APPROVED
+  REJECTED
+  RELEASED
+}
+
+enum SourceTag {
+  INSTITUTION_DECLARED
+  DOCUMENT_EXTRACTED
+  BANK_CONFIRMED
+}
+model Institution {
+  id String @id @default(cuid())
+  aicteId String @unique
+  name String
+  state String
+  category String
+  isGovernment Boolean @default(false)
+  email String
+  phone String
+  instruments Instrument[]
+  users User[]
+  createdAt DateTime @default(now())
+}
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  passwordHash String
+  role Role
+  institutionId String?
+  institution Institution? @relation(fields: [institutionId], references: [id])
+  createdAt DateTime @default(now())
+}
+model Instrument {
+  id String @id @default(cuid())
+  institutionId String
+  institution Institution @relation(fields: [institutionId], references: [id])
+  type InstrumentType @default(FDR)
+  referenceNumber String
+  issuingBank String
+  branch String
+  amount Decimal
+  issueDate DateTime
+  maturityDate DateTime
+  jointInFavourOfAICTE Boolean @default(false)
+  custodyStatus CustodyStatus @default(WITH_INSTITUTION)
+  custodyLocation String?
+  adminStatus AdminStatus @default(SUBMITTED)
+  documents Document[]
+  sources FieldSource[]
+  discrepancies Discrepancy[]
+  releases ReleaseRequest[]
+  oldLineage InstrumentLineage[] @relation("OldInstrument")
+  newLineage InstrumentLineage[] @relation("NewInstrument")
+  alerts Alert[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([maturityDate, adminStatus])
+  @@index([institutionId, adminStatus])
+}
+model FieldSource {
+  id String @id @default(cuid())
+  instrumentId String
+  instrument Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  fieldName String
+  value String
+  source SourceTag
+  recordedBy String
+  recordedAt DateTime @default(now())
+}
+model Document {
+  id String @id @default(cuid())
+  instrumentId String
+  instrument Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  kind String
+  version Int @default(1)
+  filename String
+  sha256 String
+  encryptedStoragePath String
+  uploadedBy String
+  uploadedAt DateTime @default(now())
+  extractedText String?
+  extractedFields String?
+}
+model Discrepancy {
+  id String @id @default(cuid())
+  instrumentId String
+  instrument Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  ruleCode String
+  severity Severity
+  expected String
+  found String
+  status DiscrepancyStatus @default(OPEN)
+  resolutionNote String?
+  raisedAt DateTime @default(now())
+  resolvedBy String?
+}
+model InstrumentLineage {
+  id String @id @default(cuid())
+  oldInstrumentId String
+  newInstrumentId String
+  oldInstrument Instrument @relation("OldInstrument", fields: [oldInstrumentId], references: [id])
+  newInstrument Instrument @relation("NewInstrument", fields: [newInstrumentId], references: [id])
+  reason String
+  date DateTime @default(now())
+}
+model ReleaseRequest {
+  id String @id @default(cuid())
+  instrumentId String
+  instrument Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  requestedBy String
+  reason String
+  conditionsChecklist String
+  stage ReleaseStage @default(REQUESTED)
+  decisionNotes String?
+  slaDueDate DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model ReminderRule {
+  id String @id @default(cuid())
+  offsetDays Int
+  channel String
+  recipientRole String
+  escalationAfterDays Int @default(3)
+}
+model Alert {
+  id String @id @default(cuid())
+  instrumentId String
+  instrument Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  type String
+  message String
+  recipients String
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+}
+model AuditLog {
+  id String @id @default(cuid())
+  actor String
+  role String
+  action String
+  entity String
+  beforeJson String?
+  afterJson String?
+  timestamp DateTime @default(now())
+  previousHash String?
+  hash String
+}
+model AppConfig {
+  key String @id
+  value String
+  updatedAt DateTime @updatedAt
+}

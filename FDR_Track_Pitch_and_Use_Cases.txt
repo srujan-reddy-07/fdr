@@ -1,0 +1,239 @@
+================================================================================
+FDR-TRACK (SIH26265): EXECUTIVE SUMMARY, USE CASES & PITCH NOTES
+Smart India Hackathon 2026 | Problem Statement: SIH26265
+Portal: Security Deposit / Fixed Deposit Receipt (FDR) Management Portal
+Bureau: AICTE Regulation Bureau
+================================================================================
+
+--------------------------------------------------------------------------------
+PART 1: 2-MINUTE ELEVATOR PITCH & PROBLEM-SOLUTION SUMMARY
+(Use this to explain the project quickly to judges, evaluators, or stakeholders)
+--------------------------------------------------------------------------------
+
+1. THE PROBLEM (What AICTE faces today):
+- As part of the statutory approval and compliance process, AICTE requires technical 
+  institutions (engineering, management, pharmacy, technical universities) to submit 
+  and maintain security deposits or Fixed Deposit Receipts (FDRs).
+- Today, these instruments are managed across disparate offices using fragmented physical 
+  registers, manual correspondence, and unlinked spreadsheets.
+- Critical consequences:
+  a. Lack of single-pane visibility: Officers cannot see the live validity, custody 
+     location, or true legal status of deposits.
+  b. Missed maturity dates: FDRs expire without timely renewal or conversion, risking 
+     unauthorized liquidation.
+  c. Manual scrutiny bottlenecks: Cross-checking bank certificates against institution-
+     declared numbers and amounts is slow and prone to human oversight.
+  d. Audit and security vulnerabilities: Paper trails and spreadsheets can be tampered 
+     with, offering no cryptographic provenance.
+
+2. THE SOLUTION (What FDR-Track Delivers):
+- FDR-Track is a secure, centralized, role-based lifecycle management portal designed 
+  specifically for the AICTE Regulation Bureau.
+- Core Innovations:
+  a. End-to-End Administrative Lifecycle: Covers initial declaration, document capture, 
+     verification, validity/maturity tracking, renewal lineage chains, release/refund 
+     requests, and custody tracking.
+  b. Three-Tier Trust Labelling: Every data point carries an explicit source badge:
+     - INSTITUTION_DECLARED (submitted by college)
+     - DOCUMENT_EXTRACTED (extracted via OCR from scanned documents)
+     - BANK_CONFIRMED (validated via authorized financial adapters)
+  c. Automated Discrepancy & Rules Engine: Instant detection of 11 configurable 
+     compliance rules (R01 to R11) such as date order errors, category minimum amounts, 
+     duplicate reference numbers, and missing joint/lien wording.
+  d. Cryptographic Audit Chain: Append-only ledger where every administrative event is 
+     chained using SHA-256 hashes, with a 1-click verification engine that detects any 
+     tampering.
+  e. Date Simulation Engine: Interactive demo control that advances system time by 
+     configurable offsets (e.g., +30 days) to demonstrate real-time escalation and alerts 
+     without waiting weeks.
+  f. Human-in-the-Loop Governance: Algorithms assist and flag discrepancies, but only 
+     authorized human officers make scrutiny decisions and release approvals.
+
+
+--------------------------------------------------------------------------------
+PART 2: THE 10 DETAILED USE CASES & THEIR PRACTICAL USE
+--------------------------------------------------------------------------------
+
+USE CASE 1: Centralized Security Deposit Repository
+- Who uses it: Institution Users, Scrutiny Officers, Competent Authority, Auditors, Admins.
+- Purpose: Eliminates scattered paper records and unlinked tracking spreadsheets.
+- How it works:
+  - Consolidates institution-wise and instrument-wise records across the country.
+  - Multi-parameter search by FDR reference number, issuing bank, institution name, or state.
+  - Instant filtering by administrative workflow status (Submitted, Under Scrutiny, Verified, 
+    Release Requested, etc.) and date-driven validity (Active, Expiring Soon, Matured).
+  - Institution users see strictly their own institution's portfolio, while bureau officers 
+    maintain macro-oversight.
+
+USE CASE 2: Digital Document Ingestion & Verification
+- Who uses it: Institution User (upload) & Scrutiny Officer (review).
+- Purpose: Secure capture of FDR scans, board resolutions, and bank confirmations.
+- How it works:
+  - Validates file type, size, and generates a SHA-256 fingerprint upon upload.
+  - Links uploaded evidence directly to the corresponding instrument record.
+  - Prepares document payloads for OCR text extraction and field comparison.
+
+USE CASE 3: Automated Discrepancy Detection & Scrutiny Assistance
+- Who uses it: Scrutiny Officer.
+- Purpose: Prevents non-compliant, undersized, or mismatched deposits from being verified.
+- Rules Evaluated:
+  - R01: Mandatory field missing (reference number, bank name, amount).
+  - R02: Invalid date order (maturity date earlier than issue date).
+  - R04 / R06: Duplicate FDR reference numbers across institutions.
+  - R08: Instrument submitted with an already expired maturity date.
+  - R09: AICTE joint-account or lien wording missing (flagged for scrutiny, not fraud).
+  - R11: Deposit amount below handbook minimum for the institution's category.
+- How it works:
+  - Officer clicks "Run Rules". The engine checks the record against configured AICTE 
+    thresholds and opens structured Discrepancy items specifying expected vs. found values.
+  - Status automatically transitions to DISCREPANCY_OPEN or VERIFIED.
+
+USE CASE 4: Bank Verification Adapter (Simulated Interface)
+- Who uses it: Scrutiny Officer & Regional Bureau.
+- Purpose: Validates declared instrument numbers with issuing banking networks.
+- How it works:
+  - Executes a clean adapter interface (BankVerificationService).
+  - Upgrades data trust tags from INSTITUTION_DECLARED to BANK_CONFIRMED.
+  - Flags simulated mismatches (e.g. test references ending in '99') to demonstrate 
+    exception handling.
+  - Clearly labelled as "Simulated Adapter" in accordance with SIH principles.
+
+USE CASE 5: Validity & Maturity Tracking with Date Simulation
+- Who uses it: Bureau Officers, Compliance Admins, Demo Evaluators.
+- Purpose: Proactive monitoring of expiring instruments to prevent unintended lapses.
+- How it works:
+  - System dynamically computes days to maturity:
+    * > 30 days remaining  --> ACTIVE (Sage badge)
+    * 0 to 30 days remaining --> EXPIRING_SOON (Amber badge)
+    * < 0 days (past maturity) --> MATURED (Brick badge)
+  - Features a "+30 Days Simulation" trigger: dynamically advances the comparison clock 
+    to demonstrate upcoming expiries, reminders, and urgency shifts in real time.
+
+USE CASE 6: Renewal & Replacement Lineage Monitoring
+- Who uses it: Institution Users and Bureau Officers.
+- Purpose: Maintains a tamper-proof historical chain when an FDR is rolled over or replaced.
+- How it works:
+  - When an institution renews an expiring deposit, the new instrument is linked to the 
+    preceding deposit via an InstrumentLineage relation.
+  - The previous instrument is marked RENEWED_OR_REPLACED while the new one takes over active custody.
+  - Provides a complete historical timeline (v1 -> v2 -> v3) preserving all earlier receipts, 
+    amounts, and officer notes.
+
+USE CASE 7: Release & Refund Staged Workflow
+- Who uses it: Institution User (requests), Scrutiny Officer (recommends), Competent Authority (decides).
+- Purpose: Ensures zero security deposits are released without strict compliance clearance.
+- How it works:
+  - Institution raises a formal release request.
+  - Automated conditions checklist runs:
+    1. No open discrepancies exist.
+    2. Custody status is verified IN_CUSTODY.
+    3. Required supporting documents are present.
+  - If any condition fails, submission is blocked with explicit diagnostic reasons.
+  - Multi-tier approval: Scrutiny Officer reviews and recommends; Competent Authority gives 
+    final digital approval or rejection. Custody transitions to RETURNED upon approval.
+
+USE CASE 8: Operational Outbox & Multi-Tier Escalations
+- Who uses it: Automated Scheduler, Institution Compliance Officers, Regional Directors.
+- Purpose: Eliminates forgotten notifications through automated reminder schedules.
+- How it works:
+  - Pre-configured reminder offsets at 90, 60, 30, 15, and 7 days prior to maturity.
+  - Escalation ladder: sends notifications first to institution officials; if unacknowledged, 
+    escalates to regional scrutiny officers and senior authority.
+  - Simulated Outbox adapter logs every dispatched notification.
+
+USE CASE 9: Executive Dashboard, KPIs & Impact Reporting
+- Who uses it: AICTE Senior Leadership, Bureau Chiefs, Policy Planners.
+- Purpose: Strategic oversight of the nationwide security deposit portfolio.
+- How it works:
+  - Live KPI cards: Total Instruments, Total Synthetic Portfolio Value (INR), Expiring in 
+    30 Days, Open Discrepancies, Matured, and Pending Workflow queue.
+  - Operational Watchlist highlighting items requiring immediate human intervention.
+  - Impact & Measurable Improvement panel: tracks reduction in verification turnaround time, 
+    elimination of redundant manual steps, and 100% mandatory field completeness.
+  - One-click institutional dataset export in standard CSV format for Excel reporting.
+
+USE CASE 10: Cryptographic Audit Trail & Tamper Verification
+- Who uses it: Independent Auditors, Vigilance Officers, System Administrators.
+- Purpose: Complete legal accountability, forensic tracking, and non-repudiation.
+- How it works:
+  - Every create, review, bank verification, discrepancy resolution, and approval event 
+    is recorded in an append-only ledger.
+  - Hash Chaining: Each log entry stores the SHA-256 hash of its payload plus the hash 
+    of the previous log entry.
+  - "Verify Audit Chain" Button: Recomputes the cryptographic hash chain from Genesis to 
+    the latest transaction. Immediately validates 100% integrity or reports the exact ID 
+    of any tampered record.
+
+
+--------------------------------------------------------------------------------
+PART 3: ROLES AND ACCESS CONTROL (RBAC MATRIX)
+--------------------------------------------------------------------------------
+
+1. Institution User:
+   - Can submit new FDR declarations.
+   - Can view only their own institution's portfolio.
+   - Can initiate renewal submissions and request deposit release.
+   - Cannot view other institutions or approve releases.
+
+2. Scrutiny Officer (Regional / Bureau):
+   - Reviews incoming submissions nationwide or by region.
+   - Runs automated rule checks and logs scrutiny observations.
+   - Resolves discrepancies with mandatory notes.
+   - Recommends release requests for higher authority approval.
+
+3. Competent Authority (Senior Officer):
+   - Holds the statutory power to make final release decisions.
+   - Reviews release requests recommended by scrutiny officers.
+   - Executes digital APPROVE_RELEASE or REJECT_RELEASE.
+
+4. Auditor (Read-Only):
+   - Full read-only transparency across all institutions, instruments, and system logs.
+   - Inspects the append-only audit trail and verifies cryptographic integrity.
+   - Cannot create, modify, or delete any operational records.
+
+5. Administrator:
+   - Manages role configurations, demo users, reminder offsets, and baseline rules.
+   - Can reset demo data and inspect system diagnostic adapters.
+
+
+--------------------------------------------------------------------------------
+PART 4: DEMO SCRIPT CHEAT SHEET (FOR A 5-MINUTE LIVE DEMO)
+--------------------------------------------------------------------------------
+
+Step 1: Open http://localhost:3001
+- Show the clean institutional design (warm paper, soft stone sidebar, solid white cards).
+- Point to the live IST timeline in the top right.
+- Highlight the 8 executive KPI cards (64 instruments, Rs 5.7+ Crore synthetic value).
+
+Step 2: Role Switching & Repository Filter
+- Switch role to "Scrutiny Officer" via the top-right dropdown.
+- Navigate to "FDR Repository". Search for "Demo National Bank" or filter by "DISCREPANCY_OPEN".
+- Open an instrument to show the Trust Badges: INSTITUTION_DECLARED vs BANK_CONFIRMED.
+
+Step 3: Verification & Rules Engine
+- Navigate to "Verification & Scrutiny".
+- Open a pending instrument and click "Run Rules".
+- Show the automatic generation of rule findings (e.g. R09 lien wording, R02 date check).
+- Click "Resolve Discrepancies", input a justification note, and watch the status update to VERIFIED.
+
+Step 4: Maturity Simulation (+30 Days)
+- Navigate to "Maturity & Alerts".
+- Click "Simulate +30 days".
+- Observe the live re-computation: instruments approach maturity and status badges update dynamically.
+
+Step 5: Staged Release Workflow
+- Navigate to "Release & Refund".
+- Switch role to "Competent Authority".
+- Open a release request, verify that the conditions checklist passed, and click "Approve Release".
+- Notice the custody status change to RETURNED.
+
+Step 6: Cryptographic Audit Verification
+- Navigate to "Audit Trail".
+- Point out the append-only chronological log with SHA-256 hashes.
+- Click "Verify Audit Chain".
+- Show the green success banner: "Audit chain verified successfully. Checked N entries."
+
+Step 7: Data Portability
+- Click "Download Dataset (CSV)" at the bottom of the sidebar.
+- Open the CSV file in Excel to demonstrate ready compliance data export.
+================================================================================

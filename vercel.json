@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "node -e \"require('fs').copyFileSync('prisma/schema.vercel.prisma', 'prisma/schema.prisma')\" && prisma generate && next build",
+  "installCommand": "npm install",
+  "regions": ["bom1"]
+}

@@ -1,0 +1,26 @@
+# Dependencies
+node_modules
+
+# Next.js build output
+.next
+out
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database files (SQLite - local dev only)
+prisma/*.db
+prisma/*.db-journal
+
+# Build & coverage
+coverage
+dist
+
+# Vercel
+.vercel
+
+# OS
+.DS_Store
+Thumbs.db
